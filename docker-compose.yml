@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: ci4-app
+    volumes:
+      - ./docker/php-fpm.d/www.conf:/etc/php-fpm.d/www.conf
+      - ./:/var/www/
+    networks:
+      - ci-network
+
+  mysql:
+    container_name: ci4-mysql8
+    image: mysql:8.0.32
+    volumes:
+      - ./docker/mysql/data:/var/lib/mysql
+      - ./docker/mysql:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_DATABASE: 'ci4crud'
+      MYSQL_ROOT_PASSWORD: 'secret'
+    networks:
+      - ci-network
+
+  nginx:
+    container_name: ci4-nginx
+    image: nginx:alpine
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www
+      - ./docker/nginx/:/etc/nginx/conf.d/
+    networks:
+      - ci-network
+
+networks:
+  ci-network:
+    driver: bridge
