@@ -18,4 +18,6 @@ RUN addgroup -S -g $GID app && adduser -u $UID -G app -D app
 
 RUN chown -R app:app /var/www/
 
+USER $USER
+
 WORKDIR /var/www/
