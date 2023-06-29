@@ -3,7 +3,7 @@
 namespace Config;
 
 // Create a new instance of our RouteCollection class.
-use App\Controllers\Pages;
+use App\Controllers\UserController;
 
 $routes = Services::routes();
 
@@ -33,8 +33,26 @@ $routes->set404Override();
 // route since we don't have to scan directories.
 $routes->get('/', 'Home::index');
 
-$routes->get('pages', [Pages::class, 'index']);
-$routes->get('(:segment)', [Pages::class, 'view']);
+$routes->group('users', static function ($routes) {
+    $routes->get('', [UserController::class, 'index'], ['as' => 'users.index']);
+    $routes->get('create', [UserController::class, 'create'], ['as' => 'users.create']);
+    $routes->get('edit/(:num)', [UserController::class, 'edit'], ['as' => 'users.edit']);
+});
+
+$routes->group(
+    'api',
+    [
+        'namespace' => 'App\Controllers\Api',
+    ],
+    static function ($routes) {
+        $routes->group('users', static function ($routes) {
+            $routes->get('', [\App\Controllers\Api\UserController::class, 'paginate'], ['as' => 'api.users.paginate']);
+            $routes->post('', [\App\Controllers\Api\UserController::class, 'store'], ['as' => 'api.users.store']);
+            $routes->put('(:num)', [\App\Controllers\Api\UserController::class, 'update'], ['as' => 'api.users.update']);
+            $routes->delete('(:num)', [\App\Controllers\Api\UserController::class, 'delete'], ['as' => 'api.users.delete']);
+        });
+    }
+);
 
 /*
  * --------------------------------------------------------------------
