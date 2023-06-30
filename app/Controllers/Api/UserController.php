@@ -36,15 +36,23 @@ class UserController extends BaseController
         $column = $order['column'] ?? 'id';
         $direction = $order['dir'] ?? 'ASC';
 
-        $paginate = $this->userModel->orderBy($column, $direction)
-            ->paginate(
-                perPage: $length,
-                page: $page
-            );
+        $users = $this->userModel->orderBy($column, $direction)
+            ->select([
+                'id',
+                'first_name',
+                'last_name',
+                'email',
+                'mobile',
+                'username',
+            ]);
+        $paginate = $users->paginate(
+            perPage: $length,
+            page: $page
+        );
 
         return $this->respond([
             'data' => $paginate,
-            'recordsTotal' => $this->userModel->pager->getTotal(),
+            'recordsTotal' => $users->countAllResults(),
             'recordsFiltered' => $this->userModel->pager->getTotal(),
         ]);
     }
@@ -86,6 +94,10 @@ class UserController extends BaseController
 
         $data['id'] = $id;
 
+        if (is_null($data['password'])) {
+            unset($data['password'], $data['password_confirm']);
+        }
+
         if (!$this->validateData($data, 'userUpdateRules')) {
             return $this->respond($this->validator->getErrors(), 422);
         };
@@ -99,6 +111,6 @@ class UserController extends BaseController
     {
         $this->userModel->delete($id);
 
-        return $this->respondDeleted();
+        return $this->respondNoContent();
     }
 }

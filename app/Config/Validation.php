@@ -181,7 +181,7 @@ class Validation extends BaseConfig
         'password_confirm' => [
             'label' => 'Labels.user.password_confirm',
             'rules' => [
-                'required_with[password]',
+                'permit_empty',
                 'matches[password]',
             ],
             'errors' => [
