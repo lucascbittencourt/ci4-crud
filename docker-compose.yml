@@ -3,6 +3,7 @@ version: '3.8'
 services:
   app:
     build: .
+    image: cicrud
     container_name: ci4-app
     volumes:
       - ./docker/php-fpm.d/www.conf:/etc/php-fpm.d/www.conf

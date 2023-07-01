@@ -6,7 +6,8 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "codeigniter4/framework": "^4.0"
+        "codeigniter4/framework": "^4.0",
+        "codeigniter4/shield": "^1.0@beta"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9",
@@ -35,5 +36,7 @@
         "forum": "https://forum.codeigniter.com/",
         "source": "https://github.com/codeigniter4/CodeIgniter4",
         "slack": "https://codeigniterchat.slack.com"
-    }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }

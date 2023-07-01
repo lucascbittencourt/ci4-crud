@@ -111,7 +111,7 @@ Users
                                 timerProgressBar: true,
                             });
 
-                            dataTable.reload();
+                            location.reload();
                         },
                         error: function (data) {
                             Swal.fire({

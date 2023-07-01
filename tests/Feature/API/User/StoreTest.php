@@ -2,23 +2,17 @@
 
 namespace Feature\API\User;
 
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use App\Models\User;
 use CodeIgniter\Test\Fabricator;
-use CodeIgniter\Test\FeatureTestTrait;
-use Tests\Support\Models\UserFabricator;
+use Tests\Support\TestCase;
 
-class StoreTest extends CIUnitTestCase
+class StoreTest extends TestCase
 {
-    use DatabaseTestTrait;
-    use FeatureTestTrait;
-
-    protected $migrate = true;
-    protected $refresh = true;
-    protected $namespace = 'App';
-
     public function testItShouldStoreUser(): void
     {
+        $userFabricator = new Fabricator(User::class);
+        $user = $userFabricator->create();
+
         $params = [
             'first_name' => 'Lucas',
             'last_name' => 'Silva',
@@ -29,14 +23,13 @@ class StoreTest extends CIUnitTestCase
             'password_confirm' => 'secretPassword',
         ];
 
-        $result = $this->post('/api/users', $params);
+        $result = $this->actingAs($user)->post('/api/users', $params);
 
         $result->assertStatus(201);
 
         $this->seeInDatabase('users', [
             'first_name' => $params['first_name'],
             'last_name' => $params['last_name'],
-            'email' => $params['email'],
             'mobile' => $params['mobile'],
             'username' => $params['username'],
         ]);
@@ -44,24 +37,30 @@ class StoreTest extends CIUnitTestCase
 
     public function testItShouldNotStoreUserWithoutRequiredFields(): void
     {
-        $result = $this->post('/api/users', []);
+        $userFabricator = new Fabricator(User::class);
+        $user = $userFabricator->create();
+
+        $result = $this->actingAs($user)->post('/api/users', []);
 
         $result->assertStatus(422);
         $result->assertJSONExact([
-            'first_name' => 'The First name is required.',
-            'last_name' => 'The Last name is required.',
-            'mobile' => 'The Mobile is required.',
-            'username' => 'The Username is required.',
-            'email' => 'The Email is required.',
-            'password' => 'The Password is required.',
-            'password_confirm' => 'The password confirmation should match with the password.',
+            'errors' => [
+                'first_name' => 'The First name is required.',
+                'last_name' => 'The Last name is required.',
+                'mobile' => 'The Mobile is required.',
+                'username' => 'The Username is required.',
+                'email' => 'The Email Address is required.',
+                'password' => 'The Password is required.',
+                'password_confirm' => 'The Password (again) is required.',
+            ],
         ]);
-
-        $this->assertTrue($this->db->table('users')->emptyTable());
     }
 
     public function testItShouldNotStoreUserWithAnInvalidEmail(): void
     {
+        $userFabricator = new Fabricator(User::class);
+        $user = $userFabricator->create();
+
         $params = [
             'first_name' => 'Lucas',
             'last_name' => 'Silva',
@@ -72,22 +71,24 @@ class StoreTest extends CIUnitTestCase
             'password_confirm' => 'secretPassword',
         ];
 
-        $result = $this->post('/api/users', $params);
+        $result = $this->actingAs($user)->post('/api/users', $params);
 
         $result->assertStatus(422);
         $result->assertJSONExact([
-            'email' => 'The email "invalid-email" is invalid!',
+            'errors' => [
+                'email' => 'The email "invalid-email" is invalid!',
+            ],
         ]);
-
-        $this->assertTrue($this->db->table('users')->emptyTable());
     }
 
     public function testItShouldNotStoreUserWithAnEmailAlreadyInUse(): void
     {
-        $userFabricator = new Fabricator(UserFabricator::class);
+        $userFabricator = new Fabricator(User::class);
         $userFabricator->setOverrides([
             'email' => 'used.email@gmail.com',
         ])->create();
+
+        $user = $userFabricator->setOverrides()->create();
 
         $params = [
             'first_name' => 'Lucas',
@@ -99,22 +100,24 @@ class StoreTest extends CIUnitTestCase
             'password_confirm' => 'secretPassword',
         ];
 
-        $result = $this->post('/api/users', $params);
+        $result = $this->actingAs($user)->post('/api/users', $params);
 
         $result->assertStatus(422);
         $result->assertJSONExact([
-            'email' => 'Sorry. The email: "used.email@gmail.com" has been used by other user.',
+            'errors' => [
+                'email' => 'Sorry. The email: "used.email@gmail.com" has been used by other user.',
+            ],
         ]);
-
-        $this->assertTrue($this->db->table('users')->emptyTable());
     }
 
     public function testItShouldNotStoreUserWithAnUsernameAlreadyInUse(): void
     {
-        $userFabricator = new Fabricator(UserFabricator::class);
+        $userFabricator = new Fabricator(User::class);
         $userFabricator->setOverrides([
             'username' => 'admin',
         ])->create();
+
+        $user = $userFabricator->setOverrides()->create();
 
         $params = [
             'first_name' => 'Lucas',
@@ -126,22 +129,24 @@ class StoreTest extends CIUnitTestCase
             'password_confirm' => 'secretPassword',
         ];
 
-        $result = $this->post('/api/users', $params);
+        $result = $this->actingAs($user)->post('/api/users', $params);
 
         $result->assertStatus(422);
         $result->assertJSONExact([
-            'username' => 'Sorry. The username: "admin" has been taken by other user. Try other.',
+            'errors' => [
+                'username' => 'Sorry. The username: "admin" has been taken by other user. Try other.',
+            ],
         ]);
-
-        $this->assertTrue($this->db->table('users')->emptyTable());
     }
 
     public function testItShouldNotStoreUserWhenTheMobileNumberIsAlreadyInUse(): void
     {
-        $userFabricator = new Fabricator(UserFabricator::class);
+        $userFabricator = new Fabricator(User::class);
         $userFabricator->setOverrides([
             'mobile' => '99999999',
         ])->create();
+
+        $user = $userFabricator->create();
 
         $params = [
             'first_name' => 'Lucas',
@@ -153,13 +158,28 @@ class StoreTest extends CIUnitTestCase
             'password_confirm' => 'secretPassword',
         ];
 
-        $result = $this->post('/api/users', $params);
+        $result = $this->actingAs($user)->post('/api/users', $params);
 
         $result->assertStatus(422);
         $result->assertJSONExact([
-            'mobile' => 'Sorry. That mobile number has been used by other user.',
+            'errors' => [
+                'mobile' => 'Sorry. That mobile number has been used by other user.',
+            ],
+        ]);
+    }
+
+    public function testItShouldNotStoreUserWhenUserIsNotAuthenticated(): void
+    {
+        $result = $this->post('/api/users', [
+            'first_name' => 'Lucas',
+            'last_name' => 'Silva',
+            'email' => 'lucas.silva@gmail.com',
+            'mobile' => '99999999',
+            'username' => 'lucas.bittencourt',
+            'password' => 'secretPassword',
+            'password_confirm' => 'secretPassword',
         ]);
 
-        $this->assertTrue($this->db->table('users')->emptyTable());
+        $result->assertRedirect();
     }
 }

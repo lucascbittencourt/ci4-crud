@@ -42,82 +42,7 @@ class Validation extends BaseConfig
     // Rules
     // --------------------------------------------------------------------
 
-    public array $userStoreRules = [
-        'first_name' => [
-            'label' => 'Labels.user.first_name',
-            'rules' => [
-                'required',
-            ],
-            'errors' => [
-                'required' => 'Rules.required',
-            ],
-        ],
-        'last_name' => [
-            'label' => 'Labels.user.last_name',
-            'rules' => [
-                'required',
-            ],
-            'errors' => [
-                'required' => 'Rules.required',
-            ],
-        ],
-        'mobile' => [
-            'label' => 'Labels.user.mobile',
-            'rules' => [
-                'required',
-                'is_unique[users.mobile]',
-            ],
-            'errors' => [
-                'required' => 'Rules.required',
-                'is_unique' => 'Rules.user.mobile.unique',
-            ],
-        ],
-        'username' => [
-            'label' => 'Labels.user.username',
-            'rules' => [
-                'required',
-                'is_unique[users.username]',
-            ],
-            'errors' => [
-                'required' => 'Rules.required',
-                'is_unique' => 'Rules.user.username.unique',
-            ],
-        ],
-        'email' => [
-            'label' => 'Labels.user.email',
-            'rules' => [
-                'required',
-                'valid_email',
-                'is_unique[users.email]',
-            ],
-            'errors' => [
-                'required' => 'Rules.required',
-                'valid_email' => 'Rules.valid_email',
-                'is_unique' => 'Rules.user.email.unique',
-            ],
-        ],
-        'password' => [
-            'label' => 'Labels.user.password',
-            'rules' => [
-                'required',
-            ],
-            'errors' => [
-                'required' => 'Rules.required',
-            ],
-        ],
-        'password_confirm' => [
-            'label' => 'Labels.user.password_confirm',
-            'rules' => [
-                'required_with[password]',
-                'matches[password]',
-            ],
-            'errors' => [
-                'required_with' => 'Rules.user.password_confirm.required_with',
-                'matches' => 'Rules.user.password_confirm.matches',
-            ],
-        ],
-    ];
-    public array $userUpdateRules = [
+    public array $userUpdate = [
         'id' => 'is_natural_no_zero',
         'first_name' => [
             'label' => 'Labels.user.first_name',
@@ -164,7 +89,7 @@ class Validation extends BaseConfig
             'rules' => [
                 'required',
                 'valid_email',
-                'is_unique[users.email,id,{id}]',
+                'is_unique[auth_identities.secret,user_id,{id}]',
             ],
             'errors' => [
                 'required' => 'Rules.required',
@@ -176,6 +101,7 @@ class Validation extends BaseConfig
             'label' => 'Labels.user.password',
             'rules' => [
                 'permit_empty',
+                'strong_password',
             ],
         ],
         'password_confirm' => [
@@ -187,6 +113,83 @@ class Validation extends BaseConfig
             'errors' => [
                 'required_with' => 'Rules.user.password_confirm.required_with',
                 'matches' => 'Rules.user.password_confirm.matches',
+            ],
+        ],
+    ];
+
+    //--------------------------------------------------------------------
+    // Rules For Registration
+    //--------------------------------------------------------------------
+    public array $registration = [
+        'first_name' => [
+            'label' => 'Labels.user.first_name',
+            'rules' => [
+                'required',
+            ],
+            'errors' => [
+                'required' => 'Rules.required',
+            ],
+        ],
+        'last_name' => [
+            'label' => 'Labels.user.last_name',
+            'rules' => [
+                'required',
+            ],
+            'errors' => [
+                'required' => 'Rules.required',
+            ],
+        ],
+        'mobile' => [
+            'label' => 'Labels.user.mobile',
+            'rules' => [
+                'required',
+                'is_unique[users.mobile]',
+            ],
+            'errors' => [
+                'required' => 'Rules.required',
+                'is_unique' => 'Rules.user.mobile.unique',
+            ],
+        ],
+        'username' => [
+            'label' => 'Auth.username',
+            'rules' => [
+                'required',
+                'max_length[30]',
+                'min_length[3]',
+                'regex_match[/\A[a-zA-Z0-9\.]+\z/]',
+                'is_unique[users.username]',
+            ],
+            'errors' => [
+                'required' => 'Rules.required',
+                'is_unique' => 'Rules.user.username.unique',
+            ],
+        ],
+        'email' => [
+            'label' => 'Auth.email',
+            'rules' => [
+                'required',
+                'max_length[254]',
+                'valid_email',
+                'is_unique[auth_identities.secret]',
+            ],
+            'errors' => [
+                'required' => 'Rules.required',
+                'valid_email' => 'Rules.valid_email',
+                'is_unique' => 'Rules.user.email.unique',
+            ],
+        ],
+        'password' => [
+            'label' => 'Auth.password',
+            'rules' => 'required|strong_password',
+            'errors' => [
+                'required' => 'Rules.required',
+            ],
+        ],
+        'password_confirm' => [
+            'label' => 'Auth.passwordConfirm',
+            'rules' => 'required|matches[password]',
+            'errors' => [
+                'required' => 'Rules.required',
             ],
         ],
     ];

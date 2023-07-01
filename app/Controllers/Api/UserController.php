@@ -5,7 +5,9 @@ namespace App\Controllers\Api;
 use App\Controllers\BaseController;
 use App\Models\User;
 use CodeIgniter\API\ResponseTrait;
+use CodeIgniter\Database\RawSql;
 use CodeIgniter\HTTP\ResponseInterface;
+use CodeIgniter\Shield\Entities\User as UserEntity;
 
 class UserController extends BaseController
 {
@@ -27,23 +29,26 @@ class UserController extends BaseController
         $search = $this->request->getVar('search[value]');
         $order = $this->request->getVar('order[0]');
 
+        $sql = 'users.id = identities.user_id AND identities.type = "email_password"';
+        $this->userModel->join('auth_identities as identities', new RawSql($sql), 'left');
+
         if ($search) {
             $this->userModel->like('first_name', $search)
                 ->orLike('last_name', $search)
                 ->orLike('username', $search)
-                ->orLike('email', $search);
+                ->orLike('identities.secret', $search);
         }
         $column = $order['column'] ?? 'id';
         $direction = $order['dir'] ?? 'ASC';
 
-        $users = $this->userModel->orderBy($column, $direction)
+        $users = $this->userModel->orderBy("users.$column", $direction)
             ->select([
-                'id',
-                'first_name',
-                'last_name',
-                'email',
-                'mobile',
-                'username',
+                'users.id',
+                'users.first_name',
+                'users.last_name',
+                'identities.secret as email',
+                'users.mobile',
+                'users.username',
             ]);
         $paginate = $users->paginate(
             perPage: $length,
@@ -59,58 +64,58 @@ class UserController extends BaseController
 
     public function store(): ResponseInterface
     {
-        if (!$this->validate('userStoreRules')) {
-            return $this->respond($this->validator->getErrors(), 422);
+        $rules = setting('Validation.registration');
+        $allowedFields = array_keys($rules);
+
+        $payload = $this->request->getVar($allowedFields);
+
+        if (!$this->validateData($payload, $rules)) {
+            return $this->respondUnprocessableEntity($this->validator->getErrors());
         }
 
-        $data = $this->request->getVar([
-            'first_name',
-            'last_name',
-            'mobile',
-            'email',
-            'username',
-            'password',
-            'password_confirm',
-        ]);
+        $userEntity = new UserEntity();
+        $userEntity->fill($payload);
 
-        $this->userModel->insert($data);
+        $this->userModel->save($userEntity);
 
-        return $this->respondCreated([
-            'id' => $this->userModel->getInsertID(),
-        ]);
+        $newUser = $this->userModel->findById($this->userModel->getInsertID());
+        $this->userModel->addToDefaultGroup($newUser);
+
+        return $this->respondCreated($newUser);
     }
 
     public function update(int $id): ResponseInterface
     {
-        $data = $this->request->getVar([
-            'first_name',
-            'last_name',
-            'mobile',
-            'email',
-            'username',
-            'password',
-            'password_confirm',
-        ]);
+        $rules = setting('Validation.userUpdate');
+        $allowedFields = array_keys($rules);
 
-        $data['id'] = $id;
+        $payload = array_filter($this->request->getVar($allowedFields));
+        $payload['id'] = $id;
 
-        if (is_null($data['password'])) {
-            unset($data['password'], $data['password_confirm']);
-        }
 
-        if (!$this->validateData($data, 'userUpdateRules')) {
-            return $this->respond($this->validator->getErrors(), 422);
+        if (!$this->validateData($payload, $rules)) {
+            return $this->respondUnprocessableEntity($this->validator->getErrors());
         };
 
-        $this->userModel->update($id, $data);
+        $user = $this->userModel->findById($id);
+        $user->fill($payload);
+
+        $this->userModel->save($user);
 
         return $this->respondNoContent();
     }
 
     public function delete(int $id): ResponseInterface
     {
-        $this->userModel->delete($id);
+        $this->userModel->delete($id, true);
 
         return $this->respondNoContent();
+    }
+
+    private function respondUnprocessableEntity(array $errors): ResponseInterface
+    {
+        return $this->respond([
+            'errors' => $errors,
+        ], 422);
     }
 }

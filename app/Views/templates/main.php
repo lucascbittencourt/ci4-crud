@@ -1,3 +1,10 @@
+<?php
+
+$authUser = auth()->user();
+$authUserName = $authUser->first_name . ' ' . $authUser->last_name;
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -41,10 +48,10 @@
                     <div class="info-card-text">
                         <a href="#" class="d-flex align-items-center text-white">
                                     <span class="text-truncate text-truncate-sm d-inline-block">
-                                        Dr. Codex Lantern
+                                        <?= $authUserName ?>
                                     </span>
                         </a>
-                        <span class="d-inline-block text-truncate text-truncate-sm">Toronto, Canada</span>
+                        <span class="d-inline-block text-truncate text-truncate-sm"><?= auth()->user()->username ?></span>
                     </div>
                     <img src="<?= base_url('assets/img/card-backgrounds/') ?>cover-2-lg.png" class="cover" alt="cover">
                 </div>
@@ -99,13 +106,13 @@
                                                 <img src="<?= base_url('assets/img/demo/avatars/') ?>avatar-admin.png" class="rounded-circle profile-image" alt="Dr. Codex Lantern">
                                             </span>
                                     <div class="info-card-text">
-                                        <div class="fs-lg text-truncate text-truncate-lg">Dr. Codex Lantern</div>
-                                        <span class="text-truncate text-truncate-md opacity-80">drlantern@gotbootstrap.com</span>
+                                        <div class="fs-lg text-truncate text-truncate-lg"><?= $authUserName ?></div>
+                                        <span class="text-truncate text-truncate-md opacity-80"><?= $authUser->email ?> </span>
                                     </div>
                                 </div>
                             </div>
                             <div class="dropdown-divider m-0"></div>
-                            <a class="dropdown-item fw-500 pt-3 pb-3" href="page_login.html">
+                            <a class="dropdown-item fw-500 pt-3 pb-3" href="<?= url_to('logout') ?>">
                                 <span data-i18n="drpdwn.page-logout">Logout</span>
                             </a>
                         </div>

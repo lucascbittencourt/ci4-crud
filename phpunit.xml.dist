@@ -24,9 +24,6 @@
         <testsuite name="Feature">
             <directory>./tests/Feature</directory>
         </testsuite>
-        <testsuite name="Unit">
-            <directory>./tests/Unit</directory>
-        </testsuite>
     </testsuites>
     <php>
         <server name="app.baseURL" value="http://example.com/"/>

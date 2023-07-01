@@ -33,6 +33,8 @@ $routes->set404Override();
 // route since we don't have to scan directories.
 $routes->get('/', 'Home::index');
 
+service('auth')->routes($routes);
+
 $routes->group('users', static function ($routes) {
     $routes->get('', [UserController::class, 'index'], ['as' => 'users.index']);
     $routes->get('create', [UserController::class, 'create'], ['as' => 'users.create']);

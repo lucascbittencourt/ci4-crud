@@ -2,43 +2,36 @@
 
 namespace Feature\API\User;
 
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use App\Models\User;
 use CodeIgniter\Test\Fabricator;
-use CodeIgniter\Test\FeatureTestTrait;
-use Tests\Support\Models\UserFabricator;
+use Tests\Support\TestCase;
 
-class UpdateTest extends CIUnitTestCase
+class UpdateTest extends TestCase
 {
-    use DatabaseTestTrait;
-    use FeatureTestTrait;
-
-    protected $migrate = true;
-    protected $refresh = true;
-    protected $namespace = 'App';
-
     public function testItShouldUpdateUser(): void
     {
-        $userFabricator = new Fabricator(UserFabricator::class);
-        $user = $userFabricator->create();
+        $userFabricator = new Fabricator(User::class);
+        $user = $userFabricator->setOverrides([
+            'email' => 'user@email.com',
+        ])->create();
 
         $params = [
-            'first_name' => $user['first_name'],
-            'last_name' => $user['last_name'],
-            'email' => $user['email'],
-            'mobile' => $user['mobile'],
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'email' => $user->email,
+            'mobile' => $user->mobile,
             'username' => 'admin',
+            'password' => null,
+            'password_confirm' => null,
         ];
 
-        $result = $this->put('/api/users/' . $user['id'], $params);
+        $result = $this->actingAs($user)->put('/api/users/' . $user->id, $params);
 
         $result->assertStatus(204);
-
         $this->seeInDatabase('users', [
-            'id' => $user['id'],
+            'id' => $user->id,
             'first_name' => $params['first_name'],
             'last_name' => $params['last_name'],
-            'email' => $params['email'],
             'mobile' => $params['mobile'],
             'username' => 'admin',
         ]);
@@ -46,49 +39,53 @@ class UpdateTest extends CIUnitTestCase
 
     public function testItShouldNotUpdateUserWithoutRequiredFields(): void
     {
-        $userFabricator = new Fabricator(UserFabricator::class);
+        $userFabricator = new Fabricator(User::class);
         $user = $userFabricator->create();
 
-        $result = $this->put('/api/users/' . $user['id'], []);
+        $result = $this->actingAs($user)->put('/api/users/' . $user->id, []);
 
         $result->assertStatus(422);
         $result->assertJSONExact([
-            'first_name' => 'The First name is required.',
-            'last_name' => 'The Last name is required.',
-            'mobile' => 'The Mobile is required.',
-            'username' => 'The Username is required.',
-            'email' => 'The Email is required.',
+            'errors' => [
+                'first_name' => 'The First name is required.',
+                'last_name' => 'The Last name is required.',
+                'mobile' => 'The Mobile is required.',
+                'username' => 'The Username is required.',
+                'email' => 'The Email is required.',
+            ],
         ]);
-
-        $this->assertTrue($this->db->table('users')->emptyTable());
     }
 
     public function testItShouldNotUpdateUserWithAnInvalidEmail(): void
     {
-        $userFabricator = new Fabricator(UserFabricator::class);
+        $userFabricator = new Fabricator(User::class);
         $user = $userFabricator->create();
 
         $params = [
-            'first_name' => $user['first_name'],
-            'last_name' => $user['last_name'],
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
             'email' => 'invalid-email',
-            'mobile' => $user['mobile'],
-            'username' => $user['username'],
+            'mobile' => $user->mobile,
+            'username' => $user->username,
         ];
 
-        $result = $this->put('/api/users/' . $user['id'], $params);
+        $result = $this->actingAs($user)->put('/api/users/' . $user->id, $params);
 
         $result->assertStatus(422);
         $result->assertJSONExact([
-            'email' => 'The email "invalid-email" is invalid!',
+            'errors' => [
+                'email' => 'The email "invalid-email" is invalid!',
+            ],
         ]);
-
-        $this->assertTrue($this->db->table('users')->emptyTable());
+        $this->dontSeeInDatabase('auth_identities', [
+            'user_id' => $user->id,
+            'secret' => $params['email'],
+        ]);
     }
 
     public function testItShouldNotUpdateUserWithAnEmailAlreadyInUse(): void
     {
-        $userFabricator = new Fabricator(UserFabricator::class);
+        $userFabricator = new Fabricator(User::class);
         $userFabricator->setOverrides([
             'email' => 'used.email@gmail.com',
         ])->create();
@@ -98,78 +95,86 @@ class UpdateTest extends CIUnitTestCase
         ])->create();
 
         $params = [
-            'first_name' => $user['first_name'],
-            'last_name' => $user['last_name'],
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
             'email' => 'used.email@gmail.com',
-            'mobile' => $user['mobile'],
-            'username' => $user['username'],
+            'mobile' => $user->mobile,
+            'username' => $user->username,
         ];
 
-        $result = $this->put('/api/users/' . $user['id'], $params);
+        $result = $this->actingAs($user)->put('/api/users/' . $user->id, $params);
 
         $result->assertStatus(422);
         $result->assertJSONExact([
-            'email' => 'Sorry. The email: "used.email@gmail.com" has been used by other user.',
+            'errors' => [
+                'email' => 'Sorry. The email: "used.email@gmail.com" has been used by other user.',
+            ],
         ]);
-
-        $this->assertTrue($this->db->table('users')->emptyTable());
+        $this->dontSeeInDatabase('auth_identities', [
+            'user_id' => $user->id,
+            'secret' => $params['email'],
+        ]);
     }
 
-    public function testItShouldNotStoreUserWithAnUsernameAlreadyInUse(): void
+    public function testItShouldNotUpdateUserWithAnUsernameAlreadyInUse(): void
     {
-        $userFabricator = new Fabricator(UserFabricator::class);
+        $userFabricator = new Fabricator(User::class);
         $userFabricator->setOverrides([
             'username' => 'admin',
         ])->create();
 
-        $user = $userFabricator->setOverrides([
-            'username' => 'nice-username',
-        ])->create();
+        $user = $userFabricator->setOverrides()->create();
 
         $params = [
-            'first_name' => $user['first_name'],
-            'last_name' => $user['last_name'],
-            'email' => $user['email'],
-            'mobile' => $user['mobile'],
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'email' => 'user@email.com',
+            'mobile' => $user->mobile,
             'username' => 'admin',
         ];
 
-        $result = $this->put('/api/users/' . $user['id'], $params);
+        $result = $this->actingAs($user)->put('/api/users/' . $user->id, $params);
 
         $result->assertStatus(422);
         $result->assertJSONExact([
-            'username' => 'Sorry. The username: "admin" has been taken by other user. Try other.',
+            'errors' => [
+                'username' => 'Sorry. The username: "admin" has been taken by other user. Try other.',
+            ],
         ]);
-
-        $this->assertTrue($this->db->table('users')->emptyTable());
+        $this->dontSeeInDatabase('users', [
+            'id' => $user->id,
+            'username' => $params['username'],
+        ]);
     }
 
-    public function testItShouldNotStoreUserWhenTheMobileNumberIsAlreadyInUse(): void
+    public function testItShouldNotUpdateUserWhenTheMobileNumberIsAlreadyInUse(): void
     {
-        $userFabricator = new Fabricator(UserFabricator::class);
+        $userFabricator = new Fabricator(User::class);
         $userFabricator->setOverrides([
             'mobile' => '99999999',
         ])->create();
 
-        $user = $userFabricator->setOverrides([
-            'mobile' => '11111111',
-        ])->create();
+        $user = $userFabricator->setOverrides()->create();
 
         $params = [
-            'first_name' => $user['first_name'],
-            'last_name' => $user['last_name'],
-            'email' => $user['email'],
+            'first_name' => $user->first_name,
+            'last_name' => $user->last_name,
+            'email' => 'user@email.com',
             'mobile' => '99999999',
-            'username' => $user['username'],
+            'username' => $user->username,
         ];
 
-        $result = $this->put('/api/users/' . $user['id'], $params);
+        $result = $this->actingAs($user)->put('/api/users/' . $user->id, $params);
 
         $result->assertStatus(422);
         $result->assertJSONExact([
-            'mobile' => 'Sorry. That mobile number has been used by other user.',
+            'errors' => [
+                'mobile' => 'Sorry. That mobile number has been used by other user.',
+            ],
         ]);
-
-        $this->assertTrue($this->db->table('users')->emptyTable());
+        $this->dontSeeInDatabase('users', [
+            'id' => $user->id,
+            'mobile' => $params['mobile'],
+        ]);
     }
 }

@@ -2,38 +2,29 @@
 
 namespace Feature\API\User;
 
-use CodeIgniter\Test\CIUnitTestCase;
-use CodeIgniter\Test\DatabaseTestTrait;
+use App\Models\User;
 use CodeIgniter\Test\Fabricator;
-use CodeIgniter\Test\FeatureTestTrait;
-use Tests\Support\Models\UserFabricator;
+use Tests\Support\TestCase;
 
-class PaginateTest extends CIUnitTestCase
+class PaginateTest extends TestCase
 {
-    use DatabaseTestTrait;
-    use FeatureTestTrait;
-
-    protected $migrate = true;
-    protected $refresh = true;
-    protected $namespace = 'App';
-
     public function testItShouldReturnUsersPaginate(): void
     {
-        $userFabricator = new Fabricator(UserFabricator::class);
+        $userFabricator = new Fabricator(User::class);
         $user = $userFabricator->create();
 
-        $result = $this->get('/api/users');
+        $result = $this->actingAs($user)->get('/api/users');
 
-        $result->assertOK();
+        $result->assertStatus(200);
         $result->assertJSONExact([
             'data' => [
                 [
-                    'id' => $user['id'],
-                    'first_name' => $user['first_name'],
-                    'last_name' => $user['last_name'],
-                    'email' => $user['email'],
-                    'mobile' => $user['mobile'],
-                    'username' => $user['username'],
+                    'id' => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'email' => $user->email,
+                    'mobile' => $user->mobile,
+                    'username' => $user->username,
                 ]
             ],
             'recordsTotal' => 1,
@@ -43,24 +34,26 @@ class PaginateTest extends CIUnitTestCase
 
     public function testItShouldReturnUsersPaginateWithCustomPerPage(): void
     {
-        $userFabricator = new Fabricator(UserFabricator::class);
-        $userFabricator->create(10);
+        $userFabricator = new Fabricator(User::class);
+        $userFabricator->create(9);
+
+        $user = $userFabricator->create();
 
         $params = [
             'length' => 5,
         ];
 
-        $result = $this->get('/api/users', $params);
+        $result = $this->actingAs($user)->get('/api/users', $params);
 
         $data = json_decode($result->getJSON(), true);
 
-        $result->assertOK();
+        $result->assertStatus(200);
         $this->assertCount(5, $data['data']);
     }
 
     public function testItShouldReturnUsersPaginateSearchingByFirstName(): void
     {
-        $userFabricator = new Fabricator(UserFabricator::class);
+        $userFabricator = new Fabricator(User::class);
         $userFabricator->create(4);
 
         $user = $userFabricator->setOverrides([
@@ -73,18 +66,18 @@ class PaginateTest extends CIUnitTestCase
             ],
         ];
 
-        $result = $this->get('/api/users', $params);
+        $result = $this->actingAs($user)->get('/api/users', $params);
 
-        $result->assertOK();
+        $result->assertStatus(200);
         $result->assertJSONExact([
             'data' => [
                 [
-                    'id' => $user['id'],
-                    'first_name' => $user['first_name'],
-                    'last_name' => $user['last_name'],
-                    'email' => $user['email'],
-                    'mobile' => $user['mobile'],
-                    'username' => $user['username'],
+                    'id' => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'email' => $user->email,
+                    'mobile' => $user->mobile,
+                    'username' => $user->username,
                 ]
             ],
             'recordsTotal' => 5,
@@ -94,7 +87,7 @@ class PaginateTest extends CIUnitTestCase
 
     public function testItShouldReturnUsersPaginateSearchingByLastName(): void
     {
-        $userFabricator = new Fabricator(UserFabricator::class);
+        $userFabricator = new Fabricator(User::class);
         $userFabricator->create(4);
 
         $user = $userFabricator->setOverrides([
@@ -107,18 +100,18 @@ class PaginateTest extends CIUnitTestCase
             ],
         ];
 
-        $result = $this->get('/api/users', $params);
+        $result = $this->actingAs($user)->get('/api/users', $params);
 
-        $result->assertOK();
+        $result->assertStatus(200);
         $result->assertJSONExact([
             'data' => [
                 [
-                    'id' => $user['id'],
-                    'first_name' => $user['first_name'],
-                    'last_name' => $user['last_name'],
-                    'email' => $user['email'],
-                    'mobile' => $user['mobile'],
-                    'username' => $user['username'],
+                    'id' => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'email' => $user->email,
+                    'mobile' => $user->mobile,
+                    'username' => $user->username,
                 ]
             ],
             'recordsTotal' => 5,
@@ -128,7 +121,7 @@ class PaginateTest extends CIUnitTestCase
 
     public function testItShouldReturnUsersPaginateSearchingByUsername(): void
     {
-        $userFabricator = new Fabricator(UserFabricator::class);
+        $userFabricator = new Fabricator(User::class);
         $userFabricator->create(4);
 
         $user = $userFabricator->setOverrides([
@@ -141,18 +134,18 @@ class PaginateTest extends CIUnitTestCase
             ],
         ];
 
-        $result = $this->get('/api/users', $params);
+        $result = $this->actingAs($user)->get('/api/users', $params);
 
-        $result->assertOK();
+        $result->assertStatus(200);
         $result->assertJSONExact([
             'data' => [
                 [
-                    'id' => $user['id'],
-                    'first_name' => $user['first_name'],
-                    'last_name' => $user['last_name'],
-                    'email' => $user['email'],
-                    'mobile' => $user['mobile'],
-                    'username' => $user['username'],
+                    'id' => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'email' => $user->email,
+                    'mobile' => $user->mobile,
+                    'username' => $user->username,
                 ]
             ],
             'recordsTotal' => 5,
@@ -162,7 +155,7 @@ class PaginateTest extends CIUnitTestCase
 
     public function testItShouldReturnUsersPaginateSearchingByEmail(): void
     {
-        $userFabricator = new Fabricator(UserFabricator::class);
+        $userFabricator = new Fabricator(User::class);
         $userFabricator->create(4);
 
         $user = $userFabricator->setOverrides([
@@ -175,22 +168,29 @@ class PaginateTest extends CIUnitTestCase
             ],
         ];
 
-        $result = $this->get('/api/users', $params);
+        $result = $this->actingAs($user)->get('/api/users', $params);
 
-        $result->assertOK();
+        $result->assertStatus(200);
         $result->assertJSONExact([
             'data' => [
                 [
-                    'id' => $user['id'],
-                    'first_name' => $user['first_name'],
-                    'last_name' => $user['last_name'],
-                    'email' => $user['email'],
-                    'mobile' => $user['mobile'],
-                    'username' => $user['username'],
+                    'id' => $user->id,
+                    'first_name' => $user->first_name,
+                    'last_name' => $user->last_name,
+                    'email' => $user->email,
+                    'mobile' => $user->mobile,
+                    'username' => $user->username,
                 ]
             ],
             'recordsTotal' => 5,
             'recordsFiltered' => 1,
         ]);
+    }
+
+    public function testItShouldNotReturnUsersPaginateWhenUserIsNotAuthenticated(): void
+    {
+        $result = $this->get('/api/users');
+
+        $result->assertRedirect();
     }
 }

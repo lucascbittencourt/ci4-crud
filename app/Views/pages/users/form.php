@@ -3,7 +3,7 @@
 <?php
 $actionType = empty($user) ? 'Add' : 'Edit';
 $method = empty($user) ? 'POST' : 'PUT';
-$url = empty($user) ? url_to('api.users.store') : url_to('api.users.update', $user['id']);
+$url = empty($user) ? url_to('api.users.store') : url_to('api.users.update', $user->id);
 ?>
 
 <?= $this->section('title') ?>
@@ -24,40 +24,35 @@ Users
         </div>
         <div class="panel-container show">
             <div class="panel-content">
-                <div class="panel-tag">
-                    Be sure to use an appropriate type attribute on all inputs (e.g., code <code>email</code> for email
-                    address or <code>number</code> for numerical information) to take advantage of newer input controls
-                    like email verification, number selection, and more.
-                </div>
                 <form id="user-form">
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label class="form-label" for="first_name">First Name</label>
                             <input type="text" id="first_name" class="form-control"
-                                   value="<?= $user['first_name'] ?? '' ?>">
+                                   value="<?= $user->first_name ?? '' ?>">
                             <div id="first_name_error" class="invalid-feedback hide"></div>
                         </div>
 
                         <div class="form-group col-md-6">
                             <label class="form-label" for="last_name">Last Name</label>
                             <input type="text" id="last_name" class="form-control"
-                                   value="<?= $user['last_name'] ?? '' ?>">
+                                   value="<?= $user->last_name ?? '' ?>">
                             <div id="last_name_error" class="invalid-feedback hide"></div>
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="mobile">Mobile</label>
-                        <input type="text" id="mobile" class="form-control" value="<?= $user['mobile'] ?? '' ?>">
+                        <input type="text" id="mobile" class="form-control" value="<?= $user->mobile ?? '' ?>">
                         <div id="mobile_error" class="invalid-feedback hide"></div>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="username">Username</label>
-                        <input type="text" id="username" class="form-control" value="<?= $user['username'] ?? '' ?>">
+                        <input type="text" id="username" class="form-control" value="<?= $user->username ?? '' ?>">
                         <div id="username_error" class="invalid-feedback hide"></div>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="email">Email</label>
-                        <input type="email" id="email" class="form-control" value="<?= $user['email'] ?? '' ?>">
+                        <input type="email" id="email" class="form-control" value="<?= $user->email ?? '' ?>">
                         <div id="email_error" class="invalid-feedback hide"></div>
                     </div>
                     <div class="form-group">

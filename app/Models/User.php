@@ -2,32 +2,32 @@
 
 namespace App\Models;
 
-use CodeIgniter\Model;
+use CodeIgniter\Shield\Entities\User as UserEntity;
+use CodeIgniter\Shield\Models\UserModel;
+use Faker\Generator;
 
-class User extends Model
+class User extends UserModel
 {
-    protected $primaryKey = 'id';
-    protected $table = 'users';
     protected $allowedFields = [
         'first_name',
         'last_name',
-        'email',
         'mobile',
         'username',
-        'password',
+        'status',
+        'status_message',
+        'active',
+        'last_active',
+        'deleted_at',
     ];
 
-    protected $beforeInsert = ['hashPassword'];
-    protected $beforeUpdate = ['hashPassword'];
-
-    protected function hashPassword(array $data): array
+    public function fake(Generator &$faker): UserEntity
     {
-        if (!isset($data['data']['password'])) {
-            return $data;
-        }
-
-        $data['data']['password'] = password_hash($data['data']['password'], PASSWORD_DEFAULT);
-
-        return $data;
+        return new UserEntity([
+            'first_name' => $faker->firstName(),
+            'last_name' => $faker->lastName(),
+            'mobile' => $faker->unique()->phoneNumber(),
+            'username' => $faker->unique()->userName(),
+            'active' => true,
+        ]);
     }
 }
